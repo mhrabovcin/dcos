@@ -254,14 +254,18 @@ function check_version() {
 
 function check_selinux() {
   ENABLED=$(getenforce)
+  RC=0
 
-  if [[ $ENABLED != 'Enforcing' ]]; then
-    RC=0
-  else
-    RC=1
+  if [[ "$ENABLED" == "Enforcing" ]]; then
+    LOADED_POLICY_LINE=$(sestatus | grep "Loaded policy name:")
+    ALLOWED_LOADED_POLICY_LINE="Loaded policy name:             targeted"
+    if [ "$LOADED_POLICY_LINE" != "$ALLOWED_LOADED_POLICY_LINE" ]; then
+      RC=1
+    fi
   fi
 
-  print_status $RC "Is SELinux disabled?"
+  MESSAGE="Is SELinux in disabled mode, permissive mode or in enforcing mode with the targeted policy loaded?"
+  print_status $RC "$MESSAGE"
   (( OVERALL_RC += $RC ))
   return $RC
 }
